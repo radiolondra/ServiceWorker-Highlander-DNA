@@ -1,5 +1,8 @@
-# ServiceWorker-Highlander
+# ServiceWorker-Highlander-DNA
 MV3 Extension: Service Worker stays alive forever.
+  
+### NOTE
+For the version that produces the same result but with external intervention of content scripts see [**Service Worker Highlander**](https://github.com/radiolondra/ServiceWorker-Highlander).  
   
 ### What is this?  
 This is a Chromium extension to demonstrate how a service worker can be started in RUNNING status and manages to keep itself active forever (RUNNING state), without any external intervention.  
