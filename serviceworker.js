@@ -25,9 +25,12 @@ letsStart();
 
 // ----------------------------------------------------------------------------------------
 function letsStart() {
-    firstCall = Date.now();
-    timer = startSeconds*SECONDS;
     isFirstStart = true;
+    isAlreadyAwake = true;
+    firstCall = Date.now();
+    lastCall = firstCall;
+    timer = startSeconds*SECONDS;
+    
     wakeup = setInterval(Highlander, timer);
     console.log(`-------- >>> Highlander has been started at ${convertNoDate(firstCall)}`);
 }
@@ -37,14 +40,15 @@ chrome.runtime.onInstalled.addListener(
     async () => await initialize()
 );
 
+chrome.tabs.onCreated.addListener(onCreatedTabListener);
+chrome.tabs.onUpdated.addListener(onUpdatedTabListener);
+chrome.tabs.onRemoved.addListener(onRemovedTabListener);
+
 // Clears the Highlander interval when browser closes.
 // This allows the process associated with the extension to be removed.
-// Comment out or modify this listener if you need your service worker 
-// to continue working in the background even after the browser is closed 
-// (remote communications, exchanging data with other extensions or applications, etc.).
 // Normally the process associated with the extension will be removed after about 5 mins at max, 
-// if there are no other external situations that continue to keep the service worker running 
-// (e.g., content scripts). 
+// if there are no other external jobs that continue to keep the service worker running 
+// (e.g., content scripts awakening SW in some way). 
 // If the browser is reopened before the system has eliminated the process, 
 // Highlander will be restarted.
 chrome.windows.onRemoved.addListener( async (windowId) => {
@@ -74,35 +78,33 @@ chrome.windows.onCreated.addListener( async (window) => {
 });
 
 function nextRoundTimeInform() {
-    const next = nextSeconds*SECONDS - (Date.now() - lastCall);
-    console.log(`Highlander next round in ${convertNoDate(next)} ( ${next/1000 | 0} seconds )`);
+    if (lastCall) {
+        const next = nextSeconds*SECONDS - (Date.now() - lastCall);
+        console.log(`Highlander next round in ${convertNoDate(next)} ( ${next/1000 | 0} seconds )`);
+    }
 }
-
-chrome.tabs.onCreated.addListener(onCreatedListener);
-chrome.tabs.onUpdated.addListener(onUpdatedListener);
-chrome.tabs.onRemoved.addListener(onRemovedListener);
 
 async function showTabs() {
     let results = await chrome.tabs.query({});
-    results.forEach(onCreatedListener);
+    results.forEach(onCreatedTabListener);
 }
 
-function onCreatedListener(tab) {
+function onCreatedTabListener(tab) {
     if (DEBUG) console.log("Created TAB id=", tab.id);
 }
 
-function onUpdatedListener(tabId, changeInfo, tab) {
+function onUpdatedTabListener(tabId, changeInfo, tab) {
     if (DEBUG) console.log("Updated TAB id=", tabId);
 }
 
-function onRemovedListener(tabId) {
+function onRemovedTabListener(tabId) {
     if (DEBUG) console.log("Removed TAB id=", tabId);
 }
 
+// ---------------------------
 // HIGHLANDER
-async function Highlander() {
-
-    isAlreadyAwake = true;
+// ---------------------------
+async function Highlander() {    
 
     const now = Date.now();
     const age = now - firstCall;
