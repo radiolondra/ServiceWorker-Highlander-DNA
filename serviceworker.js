@@ -12,23 +12,71 @@ const SECONDS = 1000;
 
 var alivePort = null;
 var isFirstStart = true;
+var isAlreadyAwake = false;
 var timer = startSeconds*SECONDS;
 var firstCall;
+var lastCall;
 var wakeup;
 
 const DEBUG = false;
+var wCounter = 0;
+
+letsStart();
 
 // ----------------------------------------------------------------------------------------
-firstCall = Date.now();
-timer = startSeconds*SECONDS;
-isFirstStart = true;
-wakeup = setInterval(Highlander, timer);
-console.log(`-------- >>> Highlander has been started at ${convertNoDate(firstCall)}`);
+function letsStart() {
+    firstCall = Date.now();
+    timer = startSeconds*SECONDS;
+    isFirstStart = true;
+    wakeup = setInterval(Highlander, timer);
+    console.log(`-------- >>> Highlander has been started at ${convertNoDate(firstCall)}`);
+}
 // ----------------------------------------------------------------------------------------
 
 chrome.runtime.onInstalled.addListener(
     async () => await initialize()
 );
+
+// Clears the Highlander interval when browser closes.
+// This allows the process associated with the extension to be removed.
+// Comment out or modify this listener if you need your service worker 
+// to continue working in the background even after the browser is closed 
+// (remote communications, exchanging data with other extensions or applications, etc.).
+// Normally the process associated with the extension will be removed after about 5 mins at max, 
+// if there are no other external situations that continue to keep the service worker running 
+// (e.g., content scripts). 
+// If the browser is reopened before the system has eliminated the process, 
+// Highlander will be restarted.
+chrome.windows.onRemoved.addListener( async (windowId) => {
+    wCounter--;          
+    if (wCounter > 0) {
+        nextRoundTimeInform();
+        return;
+    }
+
+    // no more windows open. Clear interval.
+    if (wakeup)
+    {
+        // If browser will be opened before the process associated to this extension is removed, 
+        // setting this to false will allow a new call to letsStart() ( see windows.onCreated() )
+        isAlreadyAwake = false;
+        clearInterval(wakeup);
+    }
+});
+
+chrome.windows.onCreated.addListener( async (window) => {
+    let w = await chrome.windows.getAll();
+    wCounter = w.length;
+    if (wCounter == 1 && isAlreadyAwake == false){
+        letsStart();
+    }
+    nextRoundTimeInform();
+});
+
+function nextRoundTimeInform() {
+    const next = nextSeconds*SECONDS - (Date.now() - lastCall);
+    console.log(`Highlander next round in ${convertNoDate(next)} ( ${next/1000 | 0} seconds )`);
+}
 
 chrome.tabs.onCreated.addListener(onCreatedListener);
 chrome.tabs.onUpdated.addListener(onUpdatedListener);
@@ -54,8 +102,11 @@ function onRemovedListener(tabId) {
 // HIGHLANDER
 async function Highlander() {
 
+    isAlreadyAwake = true;
+
     const now = Date.now();
     const age = now - firstCall;
+    lastCall = now;
 
     console.log(`HIGHLANDER ------< ROUND >------ Time elapsed from first start: ${convertNoDate(age)}`)
     if (alivePort == null) {
@@ -82,10 +133,13 @@ async function Highlander() {
             if (DEBUG) console.log(`(DEBUG Highlander): "ping" sent through ${alivePort.name} port`)
         }            
     }         
-        
-    setTimeout( () => {
-        nextRound();
-    }, 600);
+      
+    if (isFirstStart) { 
+        isFirstStart = false;        
+        setTimeout( () => {
+            nextRound();
+        }, 600);
+    }
     
 }
 
@@ -95,13 +149,9 @@ function convertNoDate(long) {
 }
 
 function nextRound() {
-    if (isFirstStart) { 
-        isFirstStart = false;       
-        clearInterval(wakeup);
-        timer = nextSeconds*SECONDS;
-        wakeup = setInterval(Highlander, timer);
-    }    
-    console.log(`Next Highlander round in ${nextSeconds} seconds to maintain Service Worker alive`)
+    clearInterval(wakeup);
+    timer = nextSeconds*SECONDS;
+    wakeup = setInterval(Highlander, timer);    
 }
 
 async function initialize() {	

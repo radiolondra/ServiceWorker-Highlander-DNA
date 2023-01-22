@@ -9,7 +9,7 @@ This is a Chromium extension to demonstrate how a service worker can be started 
   
 There are no content scripts that activate this service worker. It will do everything by itself.  
 
-The "magic" seems to be due to the activation of listeners on the tabs (Created, Updated and Removed). When the browser is opened, even after a restart of the PC, the service worker will be running and will remain in that state forever, thanks to the usual **Highlander** function.  
+The "magic" happens thanks to the activation of listeners (Created/Updated/Removed). When the browser is opened, even after a restart of the PC, the service worker will be running and will remain in that state forever, thanks to the usual **Highlander** function.  
   
 
 ### IMPORTANT  
