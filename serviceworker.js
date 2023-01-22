@@ -73,8 +73,7 @@ chrome.windows.onCreated.addListener( async (window) => {
     wCounter = w.length;
     if (wCounter == 1 && isAlreadyAwake == false){
         letsStart();
-    }
-    nextRoundTimeInform();
+    } else nextRoundTimeInform();
 });
 
 function nextRoundTimeInform() {
