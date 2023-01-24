@@ -18,7 +18,7 @@ When the browser is opened, even after a restart of the PC, the service worker, 
 
 #### WebSocket Test
 
-A simple WebSocket client was added to demonstrate how communications with the remote/local (echo) web socket server remains active forever thanks to **Highlander**. The included WebSocket Test client simply sends a message to a connected server every 30 seconds. The server simply echoes the received message back to all the connected clients (broadcast).
+A simple WebSocket client was added to demonstrate how communications with the remote/local (echo) web socket server remains active forever thanks to **Highlander**. The included WebSocket Test client simply sends a message to a connected server every 30 seconds. The server simply echoes the received message back.
 
 You can use 2 different websocket servers, and the choice has to be done in the extension's code:
 
@@ -26,9 +26,11 @@ in *websockettest.js*, you can enable the remote websocket server:
 
 `var endpoint = "wss://ws.ifelse.io";`
 
-or the local one, provided in this repository, which must be run before to open the extension's host browser:
+or the local one, provided in this repository, which echoes any received message back to all the connected clients (broadcast) and must be run before to open the extension's host browser:
 
 `var endpoint = "ws://localhost:8000";`
+
+The local web socket server is provided as a *PyCharm* project. You can open it in PyCharm and build the final executable (for Windows OS) by using the provided *pyinstaller .spec file* or download an already built .exe file from Releases. To build the executable for other OSes you'll have to modify the pyinstaller .spec file.
 
 #### Always-on browser extensions
 
