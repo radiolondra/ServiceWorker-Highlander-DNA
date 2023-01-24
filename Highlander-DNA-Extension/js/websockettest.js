@@ -7,7 +7,7 @@ var msgCount = 0;
 
 function connectToWS() {
     // Connect to default WS remote server
-    var endpoint = "wss://ws.ifelse.io";
+    //var endpoint = "wss://ws.ifelse.io";
 
     // Connect to local WS server. 
     // To be used with WebSocketServerTest server running 
@@ -16,7 +16,7 @@ function connectToWS() {
     // properly the behaviour.
     // See windows.onRemoved listener in serviceworker.js on how to leave the service worker 
     // (and websocket or whatever else service) always active even after closing the host browser.
-    //var endpoint = "ws://localhost:8000";
+    var endpoint = "ws://localhost:8000";
 
     if (webSocket === undefined) {
         webSocket = new WebSocket(endpoint);
@@ -31,6 +31,8 @@ function connectToWS() {
 
         webSocket.onclose = function(evt) {
             console.log(`Connection with ${endpoint} closed.`);
+            webSocket = undefined;
+            msgCount = 0;
         };
 
         webSocket.onerror = function(evt) {

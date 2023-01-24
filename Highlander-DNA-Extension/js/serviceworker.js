@@ -41,8 +41,9 @@ function letsStart() {
         isAlreadyAwake = true;
         firstCall = Date.now();
         lastCall = firstCall;
-        timer = startSeconds*SECONDS;
-        
+        //timer = startSeconds*SECONDS;
+        timer = 300;
+                
         wakeup = setInterval(Highlander, timer);
         console.log(`-------- >>> Highlander has been started at ${convertNoDate(firstCall)}`);
     } else {
@@ -96,9 +97,9 @@ chrome.windows.onRemoved.addListener( (windowId) => {
 
         // if you don't need to maintain the service worker running after the browser has been closed,
         // just uncomment the "# shutdown Highlander" rows below (already uncommented by default)
-        sendMsg("Shutting down Highlander", false); // # shutdown Highlander
-        clearInterval(wakeup);                      // # shutdown Highlander
-        wakeup = undefined;                         // # shutdown Highlander
+        // sendMsg("Shutting down Highlander", false); // # shutdown Highlander
+        // clearInterval(wakeup);                      // # shutdown Highlander
+        // wakeup = undefined;                         // # shutdown Highlander
         
         
     }
@@ -107,11 +108,11 @@ chrome.windows.onRemoved.addListener( (windowId) => {
     // If you don't need to maintain Websocket connection active after the browser has been closed,
     // just uncomment the "# shutdown websocket" rows below (already uncommented by default) 
     // and, if needed, the "# shutdown Highlander" rows to shutdown Highlander.
-    if (wsTest !== undefined) { // # shutdown websocket
-        closeConn();            // # shutdown websocket
-        clearInterval(wsTest);  // # shutdown websocket
-        wsTest = undefined;     // # shutdown websocket 
-    }                           // # shutdown websocket
+    // if (wsTest !== undefined) { // # shutdown websocket
+    //     closeConn();            // # shutdown websocket
+    //     clearInterval(wsTest);  // # shutdown websocket
+    //     wsTest = undefined;     // # shutdown websocket 
+    // }                           // # shutdown websocket
 });
 
 chrome.windows.onCreated.addListener( async (window) => {
@@ -135,9 +136,11 @@ function nextRoundTimeInform() {
     if (lastCall) {
         const next = nextSeconds*SECONDS - (Date.now() - lastCall);
         const str = `Highlander next round in ${convertNoDate(next)} ( ${next/1000 | 0} seconds )`;
-        //console.log(str);
+        if (webSocket === undefined)
+            console.log(str);
         return str;
     }
+    return ""
 }
 
 async function checkTabs() {
@@ -168,7 +171,8 @@ async function Highlander() {
 
     const str = `HIGHLANDER ------< ROUND >------ Time elapsed from first start: ${convertNoDate(age)}`;
     sendMsg(str)    
-    //console.log(str)
+    if (webSocket === undefined)
+        console.log(str)
     
     if (alivePort == null) {
         alivePort = chrome.runtime.connect({name:INTERNAL_TESTALIVE_PORT})
@@ -199,7 +203,7 @@ async function Highlander() {
         isFirstStart = false;        
         setTimeout( () => {
             nextRound();
-        }, 600);
+        }, 100);
     }
     
 }
