@@ -2,7 +2,9 @@
 // SERVICEWORKER.JS
 // ---------------------------------------------------------------------------
 
-console.log(`-------- >>> ${convertNoDate(Date.now())} UTC - Service Worker with HIGHLANDER DNA is starting <<< --------`);
+
+// for websocket tests
+importScripts("websockettest.js");
 
 const INTERNAL_TESTALIVE_PORT = "DNA_Internal_alive_test";
 
@@ -16,23 +18,52 @@ var isAlreadyAwake = false;
 var timer = startSeconds*SECONDS;
 var firstCall;
 var lastCall;
-var wakeup;
+
+var wakeup = undefined;
+var wsTest = undefined;
 
 const DEBUG = false;
 var wCounter = 0;
 
+const starter = `-------- >>> ${convertNoDate(Date.now())} UTC - Service Worker with HIGHLANDER DNA is starting <<< --------`;
+
+// Websocket test
+(async () => {
+    await webSocketTest();        
+})()
+
+console.log(starter);
+
+// Start Highlander
 letsStart();
 
 // ----------------------------------------------------------------------------------------
 function letsStart() {
-    isFirstStart = true;
-    isAlreadyAwake = true;
-    firstCall = Date.now();
-    lastCall = firstCall;
-    timer = startSeconds*SECONDS;
+    if (wakeup === undefined) {
+        isFirstStart = true;
+        isAlreadyAwake = true;
+        firstCall = Date.now();
+        lastCall = firstCall;
+        timer = startSeconds*SECONDS;
+        
+        wakeup = setInterval(Highlander, timer);
+        console.log(`-------- >>> Highlander has been started at ${convertNoDate(firstCall)}`);
+    } else {
+        nextRoundTimeInform();
+    }
+}
+// ----------------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------
+// WebSocket test
+async function webSocketTest() {      
+    await connectToWS();
     
-    wakeup = setInterval(Highlander, timer);
-    console.log(`-------- >>> Highlander has been started at ${convertNoDate(firstCall)}`);
+    if (webSocket !== undefined) {
+        if (wsTest === undefined) {
+            wsTest = setInterval(sendMsg, 30000);
+        }            
+    }    
 }
 // ----------------------------------------------------------------------------------------
 
@@ -46,44 +77,73 @@ chrome.tabs.onRemoved.addListener(onRemovedTabListener);
 
 // Clears the Highlander interval when browser closes.
 // This allows the process associated with the extension to be removed.
-// Normally the process associated with the extension will be removed after about 5 mins at max, 
-// if there are no other external jobs that continue to keep the service worker running 
-// (e.g., content scripts awakening SW in some way). 
-// If the browser is reopened before the system has eliminated the process, 
-// Highlander will be restarted.
-chrome.windows.onRemoved.addListener( async (windowId) => {
+// Normally the process associated with the extension once the guest browser is closed 
+// will be removed after about 5 mins at maximum.
+// If the browser is reopened before the system has removed the (pending) process, 
+// Highlander will be restarted in the same process which will be not removed anymore.
+chrome.windows.onRemoved.addListener( (windowId) => {
     wCounter--;          
     if (wCounter > 0) {
         nextRoundTimeInform();
         return;
     }
 
-    // no more windows open. Clear interval.
-    if (wakeup)
-    {
-        // If browser will be opened before the process associated to this extension is removed, 
-        // setting this to false will allow a new call to letsStart() ( see windows.onCreated() )
+    // Browser is closing: no more windows open. Clear Highlander interval (or leave it active forever).
+    // Shutting down Highlander will allow the system to remove the pending process associated with
+    // the extension in max. 5 minutes.
+    if (wakeup !== undefined) {
+        // If browser will be open before the process associated to this extension is removed, 
+        // setting this to false will allow a new call to letsStart() if needed 
+        // ( see windows.onCreated listener )
         isAlreadyAwake = false;
-        clearInterval(wakeup);
+
+        // if you don't need to maintain the service worker running after the browser has been closed,
+        // just uncomment the "# shutdown Highlander" rows below (already uncommented by default)
+        sendMsg("Shutting down Highlander", false); // # shutdown Highlander
+        clearInterval(wakeup);                      // # shutdown Highlander
+        wakeup = undefined;                         // # shutdown Highlander
+        
+        
     }
+
+    // Websocket: closes connection and clears interval
+    // If you don't need to maintain Websocket connection active after the browser has been closed,
+    // just uncomment the "# shutdown websocket" rows below (already uncommented by default) 
+    // and, if needed, the "# shutdown Highlander" rows to shutdown Highlander.
+    if (wsTest !== undefined) { // # shutdown websocket
+        closeConn();            // # shutdown websocket
+        clearInterval(wsTest);  // # shutdown websocket
+        wsTest = undefined;     // # shutdown websocket 
+    }                           // # shutdown websocket
 });
 
 chrome.windows.onCreated.addListener( async (window) => {
     let w = await chrome.windows.getAll();
     wCounter = w.length;
-    if (wCounter == 1 && isAlreadyAwake == false){
+    if (wCounter == 1) {
+        updateJobs();
+    }
+});
+
+async function updateJobs() {    
+    if (isAlreadyAwake == false) {
         letsStart();
     } else nextRoundTimeInform();
-});
+
+    // WebSocket test
+    webSocketTest();
+}
 
 function nextRoundTimeInform() {
     if (lastCall) {
         const next = nextSeconds*SECONDS - (Date.now() - lastCall);
-        console.log(`Highlander next round in ${convertNoDate(next)} ( ${next/1000 | 0} seconds )`);
+        const str = `Highlander next round in ${convertNoDate(next)} ( ${next/1000 | 0} seconds )`;
+        //console.log(str);
+        return str;
     }
 }
 
-async function showTabs() {
+async function checkTabs() {
     let results = await chrome.tabs.query({});
     results.forEach(onCreatedTabListener);
 }
@@ -109,7 +169,10 @@ async function Highlander() {
     const age = now - firstCall;
     lastCall = now;
 
-    console.log(`HIGHLANDER ------< ROUND >------ Time elapsed from first start: ${convertNoDate(age)}`)
+    const str = `HIGHLANDER ------< ROUND >------ Time elapsed from first start: ${convertNoDate(age)}`;
+    sendMsg(str)    
+    //console.log(str)
+    
     if (alivePort == null) {
         alivePort = chrome.runtime.connect({name:INTERNAL_TESTALIVE_PORT})
 
@@ -156,7 +219,7 @@ function nextRound() {
 }
 
 async function initialize() {	
-	await showTabs();	
+	await checkTabs();
+    updateJobs();	
 }
 // --------------------------------------------------------------------------------------
-
