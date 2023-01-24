@@ -18,7 +18,7 @@ When the browser is opened, even after a restart of the PC, the service worker, 
 
 #### WebSocket Test
 
-A WebSocket client was added to demonstrate how communications with the remote/local web socket server remains active forever thanks to **Highlander**. 
+A simple WebSocket client was added to demonstrate how communications with the remote/local (echo) web socket server remains active forever thanks to **Highlander**. The included WebSocket Test client simply sends a message to a connected server every 30 seconds. The server simply echoes the received message back to all the connected clients (broadcast).
 
 You can use 2 different websocket servers, and the choice has to be done in the extension's code:
 
@@ -35,7 +35,7 @@ or the local one, provided in this repository, which must be run before to open 
 Thanks to **Highlander**,  the service worker of an extension can remain active forever even after the host browser is closed. 
 
 All activities handled by the service worker (e.g., the accompanying WebSocket Test) will also continue to run forever.
-**To do this, just comment out a few lines of code and you are done. Read the comments in the *serviceworker.js* code for more details.**
+To do this, just comment out a few lines of code and you are done. **Read the comments in the *serviceworker.js* code for more details.**
 
 #### Debugging Highlander and Websocket Test
 
