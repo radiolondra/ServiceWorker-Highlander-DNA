@@ -1,0 +1,45 @@
+{
+	"manifest_version": 3,
+	"name": "Highlander DNA Test Extension",
+	"description": "Service Worker stays alive forever",
+	"version": "0.1",
+	"icons": {
+		"512": "assets/icon.png"
+	},
+	"background": {
+		"service_worker": "js/serviceworker.js"
+	},
+	"action": {
+		"default_icon": {
+			"16": "assets/icon.png"
+		},
+		"default_title": "Highlander DNA Test",
+    	"default_popup": "ui/popup.html"
+	},
+
+	"options_ui": {
+		"page": "ui/options.html",
+		"open_in_tab": true
+	  },
+
+	"content_scripts": [
+		{
+		  "matches": [ "*://*/*" ],
+		  "js": [
+			"js/scriptcontent.js"
+		  ],
+		  "run_at": "document_start"
+		}
+	],
+
+	"host_permissions": [
+		"<all_urls>"
+	],
+
+	"content_security_policy": {
+		"extension_pages": "script-src 'self'; object-src 'self'"
+	},
+
+	"permissions": [
+	]
+}
