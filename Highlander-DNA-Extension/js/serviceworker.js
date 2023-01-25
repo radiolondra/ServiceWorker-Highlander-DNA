@@ -8,15 +8,16 @@ importScripts("websockettest.js");
 
 const INTERNAL_TESTALIVE_PORT = "DNA_Internal_alive_test";
 
-const startSeconds = 1;
-const nextSeconds = 270;
+//const startSeconds = 1;
+const nextSeconds = 25;
 const SECONDS = 1000;
 const DEBUG = false;
 
 var alivePort = null;
 var isFirstStart = true;
 var isAlreadyAwake = false;
-var timer = startSeconds*SECONDS;
+//var timer = startSeconds*SECONDS;
+var timer;
 var firstCall;
 var lastCall;
 
@@ -46,9 +47,7 @@ function letsStart() {
                 
         wakeup = setInterval(Highlander, timer);
         console.log(`-------- >>> Highlander has been started at ${convertNoDate(firstCall)}`);
-    } else {
-        nextRoundTimeInform();
-    }
+    } 
 }
 // ----------------------------------------------------------------------------------------
 
@@ -82,7 +81,6 @@ chrome.tabs.onRemoved.addListener(onRemovedTabListener);
 chrome.windows.onRemoved.addListener( (windowId) => {
     wCounter--;          
     if (wCounter > 0) {
-        nextRoundTimeInform();
         return;
     }
 
@@ -97,10 +95,9 @@ chrome.windows.onRemoved.addListener( (windowId) => {
 
         // if you don't need to maintain the service worker running after the browser has been closed,
         // just uncomment the "# shutdown Highlander" rows below (already uncommented by default)
-        // sendMsg("Shutting down Highlander", false); // # shutdown Highlander
-        // clearInterval(wakeup);                      // # shutdown Highlander
-        // wakeup = undefined;                         // # shutdown Highlander
-        
+        sendMsg("Shutting down Highlander", false); // # shutdown Highlander
+        clearInterval(wakeup);                      // # shutdown Highlander
+        wakeup = undefined;                         // # shutdown Highlander
         
     }
 
@@ -108,11 +105,11 @@ chrome.windows.onRemoved.addListener( (windowId) => {
     // If you don't need to maintain Websocket connection active after the browser has been closed,
     // just uncomment the "# shutdown websocket" rows below (already uncommented by default) 
     // and, if needed, the "# shutdown Highlander" rows to shutdown Highlander.
-    // if (wsTest !== undefined) { // # shutdown websocket
-    //     closeConn();            // # shutdown websocket
-    //     clearInterval(wsTest);  // # shutdown websocket
-    //     wsTest = undefined;     // # shutdown websocket 
-    // }                           // # shutdown websocket
+    if (wsTest !== undefined) { // # shutdown websocket
+        closeConn();            // # shutdown websocket
+        clearInterval(wsTest);  // # shutdown websocket
+        wsTest = undefined;     // # shutdown websocket 
+    }                           // # shutdown websocket
 });
 
 chrome.windows.onCreated.addListener( async (window) => {
@@ -126,21 +123,10 @@ chrome.windows.onCreated.addListener( async (window) => {
 async function updateJobs() {    
     if (isAlreadyAwake == false) {
         letsStart();
-    } else nextRoundTimeInform();
+    }
 
     // WebSocket test
     webSocketTest();
-}
-
-function nextRoundTimeInform() {
-    if (lastCall) {
-        const next = nextSeconds*SECONDS - (Date.now() - lastCall);
-        const str = `Highlander next round in ${convertNoDate(next)} ( ${next/1000 | 0} seconds )`;
-        if (webSocket === undefined)
-            console.log(str);
-        return str;
-    }
-    return ""
 }
 
 async function checkTabs() {
@@ -170,7 +156,7 @@ async function Highlander() {
     lastCall = now;
 
     const str = `HIGHLANDER ------< ROUND >------ Time elapsed from first start: ${convertNoDate(age)}`;
-    sendMsg(str)    
+    sendMsg(str, false)    
     if (webSocket === undefined)
         console.log(str)
     

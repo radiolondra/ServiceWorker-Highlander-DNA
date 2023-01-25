@@ -41,13 +41,15 @@ function connectToWS() {
     }
 }
 
-function sendMsg(msg, bStd = true) {
+function sendMsg(msg = undefined, bs = true) {
     if (webSocket !== undefined && webSocket.readyState === webSocket.OPEN) {        
-        var message = `${nextRoundTimeInform()} - Notice # ${++msgCount}`;
-        if (msg)
+        if (msg !== undefined)              
             webSocket.send(msg);
-        if (bStd)
+        if (bs){
+            let message = `Hi WebSocket! - Notice #${++msgCount}`;
             webSocket.send(message);
+        }
+            
     }
 }
 
