@@ -12,8 +12,6 @@ This is a Chromium extension to demonstrate how a service worker can be started 
 
 There are no content scripts that activate this service worker. It will do everything by itself.  
 
- 
-
 When the browser is opened, even after a restart of the PC, the service worker, and all the running activities, will start/continue running and will remain in that state forever, thanks to the usual **Highlander** function.
 
 #### WebSocket Test
@@ -22,13 +20,13 @@ A simple WebSocket client was added to demonstrate how communications with the r
 
 You can use 2 different websocket servers, and the choice has to be done in the extension's code:
 
-in *websockettest.js*, you can enable the remote websocket server:
+in *websockettest.js*, you can enable: 
 
-`var endpoint = "wss://ws.ifelse.io";`
+- the remote websocket server: `var endpoint = "wss://ws.ifelse.io";`
 
-or the local one, provided in this repository, which echoes any received message back to all the connected clients (broadcast) and must be run before to open the extension's host browser:
+- or the local one, provided in this repository, which echoes any received message back to all the connected clients (broadcast) and must be run before to open the extension's host browser: `var endpoint = "ws://localhost:8000";`
 
-`var endpoint = "ws://localhost:8000";`
+The local web socket server is useful to externally debug the extension when the extension's host browser has been closed. That's right, because, depending on the type of configuration applied, **when the host browser is closed Highlander-DNA can either shut down with the browser or continue to live forever**, with all functionality connected and managed (e.g. the included WebSocket client/server communications test sample).
 
 The local web socket server is provided as a *PyCharm* project. You can open it in PyCharm and build the final executable (for Windows OS) by using the provided *pyinstaller .spec file* or download an already built .exe file from Releases. To build the executable for other OSes you'll have to modify the pyinstaller .spec file.
 
