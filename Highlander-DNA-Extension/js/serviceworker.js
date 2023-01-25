@@ -75,7 +75,7 @@ chrome.tabs.onRemoved.addListener(onRemovedTabListener);
 // Clears the Highlander interval when browser closes.
 // This allows the process associated with the extension to be removed.
 // Normally the process associated with the extension once the host browser is closed 
-// will be removed after about 5 mins at maximum.
+// will be removed after about 30 seconds at maximum (from Chromium 110 up, before was 5 minutes).
 // If the browser is reopened before the system has removed the (pending) process, 
 // Highlander will be restarted in the same process which will be not removed anymore.
 chrome.windows.onRemoved.addListener( (windowId) => {
@@ -86,7 +86,7 @@ chrome.windows.onRemoved.addListener( (windowId) => {
 
     // Browser is closing: no more windows open. Clear Highlander interval (or leave it active forever).
     // Shutting down Highlander will allow the system to remove the pending process associated with
-    // the extension in max. 5 minutes.
+    // the extension in max. 30 seconds (from Chromium 110 up, before was 5 minutes).
     if (wakeup !== undefined) {
         // If browser will be open before the process associated to this extension is removed, 
         // setting this to false will allow a new call to letsStart() if needed 
